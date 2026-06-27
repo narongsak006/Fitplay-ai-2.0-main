@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - FitPlay AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .icon-sm { width: 16px; height: 16px; vertical-align: middle; margin-right: 6px; margin-bottom: 2px;}
+        .icon-lg { width: 28px; height: 28px; vertical-align: middle; margin-right: 10px; }
+    </style>
+</head>
+<body class="center-screen">
+    <div class="setup-container">
+        <div class="mascot-box">
+            <img src="{{ url_for('static', filename='images/bluekub2.png') }}" class="blue-mascot" alt="Blue Mascot">
+            <div class="speech-bubble">
+                ยินดีต้อนรับสมาชิกใหม่! <i data-lucide="party-popper" class="icon-sm"></i><br>
+                มาเข้าร่วมองค์กร FitPlay กันเถอะ
+            </div>
+        </div>
+        
+        <h2 style="display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="user-plus" class="icon-lg" style="color: var(--accent-primary);"></i> สร้างบัญชีผู้ใช้ใหม่
+        </h2>
+        <p class="mb-4">ลงทะเบียนเพื่อเริ่มต้นการออกกำลังกาย</p>
+        
+        <form method="POST">
+            <div class="form-group" style="position: relative;">
+                <i data-lucide="user" class="icon-sm" style="position: absolute; left: 14px; top: 14px; color: var(--text-secondary);"></i>
+                <input type="text" name="username" placeholder="ชื่อผู้ใช้" required style="padding-left: 40px;">
+            </div>
+            <div class="form-group" style="position: relative;">
+                <i data-lucide="key" class="icon-sm" style="position: absolute; left: 14px; top: 14px; color: var(--text-secondary);"></i>
+                <input type="password" name="password" placeholder="รหัสผ่าน" required style="padding-left: 40px;">
+            </div>
+            <div class="form-group" style="position: relative;">
+                <i data-lucide="key" class="icon-sm" style="position: absolute; left: 14px; top: 14px; color: var(--text-secondary);"></i>
+                <input type="password" name="confirm_password" placeholder="ยืนยันรหัสผ่าน" required style="padding-left: 40px;">
+            </div>
+            <button type="submit" class="btn btn-primary mt-4">
+                <i data-lucide="check-circle" class="icon-sm" style="margin-right: 8px;"></i> สมัครสมาชิก
+            </button>
+        </form>
+        
+        <div class="mt-4">
+            <p>มีบัญชีอยู่แล้ว? <a href="/login" style="display: inline-flex; align-items: center;"><i data-lucide="arrow-right" class="icon-sm"></i> เข้าสู่ระบบ</a></p>
+        </div>
+        
+        {% with msgs = get_flashed_messages() %}
+            {% if msgs %}
+                <div class="alert alert-error">
+                    <i data-lucide="alert-triangle" class="icon-sm"></i> {{ msgs[0] }}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

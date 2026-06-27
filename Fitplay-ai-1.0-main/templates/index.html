@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitPlay AI - ระบบเกมออกกำลังกาย</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <!-- Modern Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .icon { width: 20px; height: 20px; vertical-align: middle; margin-right: 6px; margin-bottom: 2px; }
+        .icon-sm { width: 16px; height: 16px; vertical-align: middle; margin-right: 4px; margin-bottom: 2px;}
+        .icon-lg { width: 24px; height: 24px; vertical-align: middle; margin-right: 8px; }
+        .btn i { margin-right: 8px; }
+    </style>
+</head>
+<body>
+
+    <!-- Setup Dashboard -->
+    <div id="setup" class="center-screen">
+        <div class="setup-container">
+            <div class="mascot-box">
+                <div class="speech-bubble" id="setup-blue-message">
+                    <strong style="font-size: 16px;">สวัสดีคุณ {{ username }} <i data-lucide="hand" class="icon-sm"></i></strong><br>
+                    ระบบพร้อมใช้งานแล้ว กรุณายืนในที่สว่างเพื่อให้ AI ตรวจจับท่าทางได้แม่นยำ<br>
+                    <span style="font-size: 12px; color: var(--text-secondary);">*โปรดตรวจสอบให้แน่ใจว่ากล้องเว็บแคมทำงานปกติ</span>
+                </div>
+                <img src="{{ url_for('static', filename='images/bluekub2.png') }}" class="blue-mascot" alt="Blue Mascot">
+            </div>
+            
+            <h2 class="mb-4" style="display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="gamepad-2" class="icon-lg" style="color: var(--accent-secondary);"></i> เลือกโหมดการเล่น
+            </h2>
+            
+            <div class="form-group">
+                <label class="form-label" style="display: flex; align-items: center;">
+                    <i data-lucide="lock" class="icon-sm"></i> เข้าร่วมห้องส่วนตัว (Private Room)
+                </label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="room_id" placeholder="รหัสห้อง (หรือเว้นว่างเพื่อสร้างใหม่)" style="flex: 1;">
+                    <button onclick="startApp()" class="btn btn-secondary" style="width: auto; padding: 0 20px;">
+                        <i data-lucide="log-in" class="icon-sm" style="margin-right: 4px;"></i> สร้าง/เข้าร่วม
+                    </button>
+                </div>
+            </div>
+            
+            <div style="margin: 24px 0; text-align: center; color: var(--text-secondary); font-size: 14px; display: flex; align-items: center; gap: 10px;">
+                <span style="flex: 1; height: 1px; background: var(--border-color);"></span>
+                <span>หรือโหมดสาธารณะ</span>
+                <span style="flex: 1; height: 1px; background: var(--border-color);"></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" style="display: flex; align-items: center;">
+                    <i data-lucide="dumbbell" class="icon-sm"></i> เลือกรูปแบบการออกกำลังกาย
+                </label>
+                <select id="exercise_type" onchange="updateBlue()">
+                    <option value="pushup">วิดพื้น (Push-Up)</option>
+                    <option value="squat">ลุกนั่ง (Squat)</option>
+                    <option value="jumping_jack">กระโดดตบ (Jumping Jack)</option>
+                </select>
+            </div>
+
+            <button onclick="joinGlobal()" class="btn btn-primary mt-4">
+                <i data-lucide="globe" class="icon"></i> เข้าร่วมห้องสาธารณะ (Global Match)
+            </button>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: center; gap: 20px;">
+                <a href="/leaderboard" style="font-size: 14px; color: var(--text-primary); font-weight: 500; display: flex; align-items: center;">
+                    <i data-lucide="trophy" class="icon-sm"></i> ดูอันดับผู้นำ
+                </a>
+                <span style="color: var(--border-color);">|</span>
+                <a href="/logout" style="font-size: 14px; color: var(--danger); font-weight: 500; display: flex; align-items: center;">
+                    <i data-lucide="log-out" class="icon-sm"></i> ออกจากระบบ
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Game Interface -->
+    <div id="main-app" class="main-grid" style="display:none;">
+        <div class="video-box">
+            <div id="countdown-overlay"></div>
+            <video id="input_video" style="display:none;"></video>
+            <canvas id="output_canvas"></canvas>
+        </div>
+        
+        <!-- Heads Up Display (HUD) -->
+        <div class="side-panel">
+            <div id="game_timer">
+                <span style="display: flex; align-items: center;"><i data-lucide="timer" class="icon"></i> เวลาที่เหลือ</span>
+                <span style="color: var(--warning);">60s</span>
+            </div>
+            
+            <div class="score-display">
+                <div class="label">คะแนนปัจจุบัน</div>
+                <div class="value" id="my_counter">0</div>
+            </div>
+            
+            <h3 style="font-size: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 10px; display: flex; align-items: center;">
+                <i data-lucide="users" class="icon-sm"></i> ผู้เล่นในเซสชัน
+            </h3>
+            <div id="player_list"></div>
+            
+            <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <button id="ready_btn" onclick="sendReady()" class="btn btn-primary">
+                    <i data-lucide="check-circle" class="icon"></i> ยืนยันความพร้อม (Ready)
+                </button>
+                <button onclick="leaveRoom()" class="btn btn-danger">
+                    <i data-lucide="log-out" class="icon"></i> ออกจากห้อง (Leave)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <h2 style="color: var(--text-primary); font-size: 28px; margin-bottom: 24px; display: flex; justify-content: center; align-items: center;">
+                <i data-lucide="flag" class="icon-lg" style="color: var(--accent-primary);"></i> หมดเวลา! สรุปผล
+            </h2>
+            <div id="final_list" style="margin:20px 0; max-height: 300px; overflow-y: auto;"></div>
+            <button onclick="location.reload()" class="btn btn-outline mt-4">
+                <i data-lucide="arrow-left" class="icon-sm"></i> กลับไปหน้าหลัก
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const currentUsername = "{{ username }}";
+        lucide.createIcons();
+    </script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

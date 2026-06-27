@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Leaderboard - FitPlay AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .icon-sm { width: 16px; height: 16px; vertical-align: middle; margin-right: 6px; margin-bottom: 2px;}
+        .icon-lg { width: 28px; height: 28px; vertical-align: middle; margin-right: 10px; }
+        .rank-icon { width: 24px; height: 24px; }
+    </style>
+</head>
+<body class="leaderboard-page">
+    <div class="center-screen">
+        <div class="setup-container" style="max-width: 600px; padding: 40px 30px;">
+            <div class="mascot-box">
+                <img src="{{ url_for('static', filename='images/bluekub2.png') }}" class="blue-mascot" alt="Blue Mascot" style="width: 140px; height: 140px;">
+                <div class="speech-bubble">
+                    <i data-lucide="crown" class="icon-sm" style="color: var(--warning);"></i> สถิติผู้นำประจำสัปดาห์นี้!
+                </div>
+            </div>
+            
+            <h2 class="mb-4 text-center" style="display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="trophy" class="icon-lg" style="color: var(--warning);"></i> Leaderboard (กระดานจัดอันดับ)
+            </h2>
+            <p class="text-center mb-4" style="display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="calendar" class="icon-sm"></i> ระบบจะทำการรีเซ็ตคะแนนและจัดอันดับใหม่ทุกวันจันทร์
+            </p>
+
+            <div class="score-list">
+                {% if scores %}
+                    {% for username, total in scores %}
+                    <div class="score-item rank-{% if loop.index <= 3 %}{{ loop.index }}{% else %}other{% endif %}">
+                        <div class="rank" style="display: flex; align-items: center; justify-content: center;">
+                            {% if loop.index == 1 %} 
+                                <i data-lucide="medal" class="rank-icon" style="color: #fbbf24;"></i> 
+                            {% elif loop.index == 2 %} 
+                                <i data-lucide="medal" class="rank-icon" style="color: #94a3b8;"></i> 
+                            {% elif loop.index == 3 %} 
+                                <i data-lucide="medal" class="rank-icon" style="color: #b45309;"></i> 
+                            {% else %} 
+                                #{{ loop.index }} 
+                            {% endif %}
+                        </div>
+                        <div class="name">{{ username }}</div>
+                        <div class="total">{{ total }} <span style="font-size: 14px;">PT</span></div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center" style="padding: 40px; border: 1px dashed var(--border-color); border-radius: var(--border-radius-md); background: #f8fafc;">
+                        <p style="font-size: 16px; color: var(--text-primary); font-weight: 500;">
+                            <i data-lucide="inbox" class="icon-lg" style="color: var(--text-secondary); display: block; margin: 0 auto 10px;"></i>
+                            ยังไม่มีข้อมูลผู้เล่นในสัปดาห์นี้
+                        </p>
+                        <p style="font-size: 14px; margin-top: 5px; display: flex; align-items: center; justify-content: center;">
+                            มาร่วมเป็นผู้นำคนแรกของกระดานกันเถอะ! <i data-lucide="flame" class="icon-sm" style="color: var(--danger); margin-left: 6px;"></i>
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <a href="/" class="btn btn-primary mt-4" style="background-color: var(--text-secondary); display: inline-flex; justify-content: center; align-items: center;">
+                <i data-lucide="arrow-left" class="icon-sm"></i> กลับสู่หน้าหลัก
+            </a>
+        </div>
+    </div>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
